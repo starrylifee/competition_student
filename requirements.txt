@@ -1,0 +1,6 @@
+Pillow
+google-generativeai
+openai
+requests
+streamlit
+toml
