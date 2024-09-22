@@ -175,7 +175,7 @@ def main():
                 st.sidebar.error("프롬프트를 불러오지 못했습니다.")
     
     # Display chat interface
-    #st.title(st.session_state.chatbot_title)
+    st.title(st.session_state.chatbot_title)
     #st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     #for msg in st.session_state.messages:
         #st.chat_message(msg["role"]).write(msg["content"])
