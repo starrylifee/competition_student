@@ -167,7 +167,7 @@ def main():
         st.session_state.messages = []
         st.session_state.initialized = False
         st.session_state.teacher_email = ""
-        st.session_state.student_view = "학생용: 챗봇 도구"
+        st.session_state.student_view = "🤖 학생용: 챗봇 도구"
         st.session_state.last_email_count = 0
     
     if fetch_prompt_btn:
