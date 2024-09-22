@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 
 # 페이지 설정 - 아이콘과 제목 설정
 st.set_page_config(
-    page_title="학생용 교육 도구 텍스트",  # 브라우저 탭에 표시될 제목
+    page_title="학생용 교육 도구 챗봇",  # 브라우저 탭에 표시될 제목
     page_icon="🤖",  # 브라우저 탭에 표시될 아이콘 (이모지 또는 이미지 파일 경로)
 )
 
@@ -93,11 +93,11 @@ def fetch_instruction_from_notion(activity_code):
                 teacher_email = ""
             
             if "chatbot_title" in properties and properties["chatbot_title"]["rich_text"]:
-                chatbot_title = properties["chatbot_title"]["rich_text"][0]["text"]["content"]
+                student_view = properties["chatbot_title"]["rich_text"][0]["text"]["content"]
             else:
-                chatbot_title = ""  # 기본 제목
+                student_view = ""  # 기본 제목
             
-            return instruction, teacher_email, chatbot_title
+            return instruction, teacher_email, student_view
         else:
             st.sidebar.error("해당 Activity 코드를 노션에서 찾을 수 없습니다.")
             return None, None, None
@@ -155,31 +155,27 @@ def main():
         st.session_state.messages = []
         st.session_state.initialized = False
         st.session_state.teacher_email = ""
-        st.session_state.chatbot_title = ""
+        st.session_state.student_view = ""
         st.session_state.last_email_count = 0  # 이메일 전송을 추적하기 위한 변수
     
     if fetch_prompt_btn:
         if not activity_code or not student_name:
             st.sidebar.error("활동 코드와 학생 이름을 모두 입력해주세요.")
         else:
-            instruction, teacher_email, chatbot_title = fetch_instruction_from_notion(activity_code)
+            instruction, teacher_email, student_view = fetch_instruction_from_notion(activity_code)
             if instruction:
                 st.session_state.messages = [
                     {"role": "system", "content": instruction}
                 ]
                 st.session_state.teacher_email = teacher_email
-                st.session_state.chatbot_title = chatbot_title
+                st.session_state.student_view = student_view
                 st.session_state.initialized = True
                 st.sidebar.success("프롬프트가 성공적으로 불러와졌습니다.")
             else:
                 st.sidebar.error("프롬프트를 불러오지 못했습니다.")
     
     # Display chat interface
-    st.title(st.session_state.chatbot_title)
-    #st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    #for msg in st.session_state.messages:
-        #st.chat_message(msg["role"]).write(msg["content"])
-    #st.markdown('</div>', unsafe_allow_html=True)
+    st.title(st.session_state.student_view)
 
     if st.session_state.initialized:
         if prompt := st.chat_input("메시지를 입력하세요"):
@@ -213,22 +209,6 @@ def main():
                     st.session_state.last_email_count = user_message_count
                 else:
                     st.error("대화 내역 이메일 전송에 실패했습니다.")
-
-    # 이메일 전송 버튼 제거 (자동 전송으로 대체)
-    # st.markdown("---")
-    # if st.button("대화 내역 이메일로 보내기"):
-    #     if not st.session_state.teacher_email:
-    #         st.error("교사 이메일 주소를 불러오지 못했습니다.")
-    #     elif not student_name:
-    #         st.error("학생 이름을 입력해주세요.")
-    #     elif not st.session_state.initialized:
-    #         st.error("프롬프트를 불러온 후 대화를 시작해주세요.")
-    #     else:
-    #         success = send_email(st.session_state.messages, student_name, st.session_state.teacher_email)
-    #         if success:
-    #             st.success("대화 내역이 성공적으로 이메일로 전송되었습니다.")
-    #         else:
-    #             st.error("대화 내역 이메일 전송에 실패했습니다.")
 
 if __name__ == "__main__":
     main()
