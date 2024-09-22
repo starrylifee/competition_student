@@ -80,7 +80,7 @@ def fetch_instruction_from_notion(activity_code):
         data = response.json()
         
         if "results" in data and len(data["results"]) > 0:
-            # 'prompt', 'email', 'chatbot_title' 속성이 존재하는지 확인
+            # 'prompt', 'email', 'student_view' 속성이 존재하는지 확인
             properties = data["results"][0]["properties"]
             if "prompt" in properties and properties["prompt"]["rich_text"]:
                 instruction = properties["prompt"]["rich_text"][0]["text"]["content"]
@@ -92,8 +92,8 @@ def fetch_instruction_from_notion(activity_code):
             else:
                 teacher_email = ""
             
-            if "chatbot_title" in properties and properties["chatbot_title"]["rich_text"]:
-                student_view = properties["chatbot_title"]["rich_text"][0]["text"]["content"]
+            if "student_view" in properties and properties["student_view"]["rich_text"]:
+                student_view = properties["student_view"]["rich_text"][0]["text"]["content"]
             else:
                 student_view = ""  # 기본 제목
             
