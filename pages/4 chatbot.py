@@ -95,7 +95,7 @@ def fetch_instruction_from_notion(activity_code):
             if "chatbot_title" in properties and properties["chatbot_title"]["rich_text"]:
                 chatbot_title = properties["chatbot_title"]["rich_text"][0]["text"]["content"]
             else:
-                chatbot_title = "우리 학교가 없어졌어요."  # 기본 제목
+                chatbot_title = ""  # 기본 제목
             
             return instruction, teacher_email, chatbot_title
         else:
@@ -175,11 +175,11 @@ def main():
                 st.sidebar.error("프롬프트를 불러오지 못했습니다.")
     
     # Display chat interface
-    st.title(st.session_state.chatbot_title)
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    for msg in st.session_state.messages:
-        st.chat_message(msg["role"]).write(msg["content"])
-    st.markdown('</div>', unsafe_allow_html=True)
+    #st.title(st.session_state.chatbot_title)
+    #st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    #for msg in st.session_state.messages:
+        #st.chat_message(msg["role"]).write(msg["content"])
+    #st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.initialized:
         if prompt := st.chat_input("메시지를 입력하세요"):
