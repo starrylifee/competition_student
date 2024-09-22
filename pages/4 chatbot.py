@@ -13,19 +13,24 @@ st.set_page_config(
     page_icon="🤖",  # 브라우저 탭에 표시될 아이콘 (이모지 또는 이미지 파일 경로)
 )
 
-# Streamlit의 배경색 변경
-background_color = "#F0FFF0"
+# 배경색 변경을 위한 CSS 로드 함수
+def load_css():
+    css = """
+    <style>
+        body, .stApp, .stChatFloatingInputContainer {
+            background-color: #F0FFF0 !important; /* 전체 배경을 Honeydew로 설정 */
+        }
+        .stChatInputContainer {
+            background-color: #F0FFF0 !important; /* 입력 필드 주변 배경도 동일한 색으로 변경 */
+        }
+        textarea {
+            background-color: #FFFFFF !important; /* 실제 입력 필드는 흰색으로 설정 */
+        }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
 
-# 배경색 변경을 위한 CSS
-page_bg_css = f"""
-<style>
-    .stApp {{
-        background-color: {background_color};
-    }}
-</style>
-"""
-
-# Streamlit의 기본 메뉴와 푸터 숨기기
+# 배경색과 기본 메뉴 숨기기 설정
 hide_menu_style = """
     <style>
     #MainMenu {visibility: hidden; }
@@ -50,9 +55,9 @@ hide_menu_style = """
     </script>
 """
 
-# Streamlit에서 HTML 및 CSS 적용
+# CSS 적용
 st.markdown(hide_menu_style, unsafe_allow_html=True)
-st.markdown(page_bg_css, unsafe_allow_html=True)
+load_css()  # CSS 로드 함수 호출
 
 # OpenAI API 클라이언트 초기화
 api_keys = st.secrets["api"]["keys"]
@@ -93,7 +98,6 @@ def fetch_instruction_from_notion(activity_code):
         data = response.json()
         
         if "results" in data and len(data["results"]) > 0:
-            # 'prompt', 'email', 'student_view' 속성이 존재하는지 확인
             properties = data["results"][0]["properties"]
             if "prompt" in properties and properties["prompt"]["rich_text"]:
                 instruction = properties["prompt"]["rich_text"][0]["text"]["content"]
@@ -126,13 +130,11 @@ def send_email(chat_history, student_name, teacher_email):
         st.warning("교사 이메일이 설정되어 있지 않습니다.")
         return False  # 이메일 전송 실패
 
-    # 이메일 메시지 구성
     msg = MIMEMultipart()
     msg["From"] = st.secrets["email"]["address"]
     msg["To"] = teacher_email
     msg["Subject"] = f"{student_name} 학생의 챗봇 대화 기록"
 
-    # 대화 내용 포맷팅
     body = f"학생 이름: {student_name}\n\n대화 기록:\n\n"
     for msg_entry in chat_history:
         role = "학생" if msg_entry["role"] == "user" else "챗봇"
@@ -150,12 +152,10 @@ def send_email(chat_history, student_name, teacher_email):
         return False  # 이메일 전송 실패
 
 def main():
-    # 사이드바에 활동 코드 입력 필드 및 학생 이름 입력 필드 추가
     st.sidebar.header("활동 코드 및 학생 이름 입력")
     activity_code = st.sidebar.text_input("활동 코드 입력", value="", max_chars=50)
     student_name = st.sidebar.text_input("🔑 학생 이름 입력", value="", max_chars=50)
     
-    # 두 필드가 모두 입력되었는지 확인
     if activity_code and student_name:
         fetch_prompt_btn = st.sidebar.button("프롬프트 가져오기")
         st.sidebar.info("모든 필드를 입력한 후 '프롬프트 가져오기' 버튼을 클릭하세요.")
@@ -163,13 +163,12 @@ def main():
         fetch_prompt_btn = False
         st.sidebar.info("활동 코드와 학생 이름을 모두 입력해야 합니다.")
     
-    # 초기화
     if "messages" not in st.session_state:
         st.session_state.messages = []
         st.session_state.initialized = False
         st.session_state.teacher_email = ""
         st.session_state.student_view = ""
-        st.session_state.last_email_count = 0  # 이메일 전송을 추적하기 위한 변수
+        st.session_state.last_email_count = 0
     
     if fetch_prompt_btn:
         if not activity_code or not student_name:
@@ -177,9 +176,7 @@ def main():
         else:
             instruction, teacher_email, student_view = fetch_instruction_from_notion(activity_code)
             if instruction:
-                st.session_state.messages = [
-                    {"role": "system", "content": instruction}
-                ]
+                st.session_state.messages = [{"role": "system", "content": instruction}]
                 st.session_state.teacher_email = teacher_email
                 st.session_state.student_view = student_view
                 st.session_state.initialized = True
@@ -187,16 +184,13 @@ def main():
             else:
                 st.sidebar.error("프롬프트를 불러오지 못했습니다.")
     
-    # Display chat interface
     st.title(st.session_state.student_view)
 
     if st.session_state.initialized:
         if prompt := st.chat_input("메시지를 입력하세요"):
-            # 사용자 메시지 추가
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.chat_message("user").write(prompt)
 
-            # 사용자 메시지 개수 확인
             user_message_count = sum(1 for msg in st.session_state.messages if msg["role"] == "user")
 
             with st.spinner("응답을 기다리는 중..."):
@@ -205,16 +199,12 @@ def main():
                         model="gpt-4o-mini",
                         messages=st.session_state.messages
                     )
-
                     msg = response.choices[0].message.content.strip()
-
-                    # AI 메시지 추가
                     st.session_state.messages.append({"role": "assistant", "content": msg})
                     st.chat_message("assistant").write(msg)
                 except Exception as e:
                     st.error(f"AI 응답 생성에 실패했습니다: {e}")
 
-            # 이메일 자동 전송 조건 확인: 사용자 메시지 개수가 5의 배수이고 이전에 전송되지 않았을 때
             if user_message_count % 5 == 0 and user_message_count != st.session_state.last_email_count:
                 success = send_email(st.session_state.messages, student_name, st.session_state.teacher_email)
                 if success:
