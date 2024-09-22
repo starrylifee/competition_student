@@ -13,6 +13,9 @@ st.set_page_config(
     page_icon="🤖",  # 브라우저 탭에 표시될 아이콘 (이모지 또는 이미지 파일 경로)
 )
 
+# Streamlit의 배경색 변경
+background_color = "#F0FFF0"
+
 # Streamlit의 기본 메뉴와 푸터 숨기기
 hide_menu_style = """
 <style>
