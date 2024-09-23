@@ -26,6 +26,16 @@ def load_css():
         textarea {
             background-color: #FFFFFF !important; /* 실제 입력 필드는 흰색으로 설정 */
         }
+        /* 누적 스크롤을 위한 chat-container 스타일 추가 */
+        .chat-container {
+            max-height: 500px; /* 원하는 높이로 조정 가능 */
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #FFFFFF;
+            margin-bottom: 20px;
+        }
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
@@ -54,7 +64,6 @@ hide_menu_style = """
     });
     </script>
 """
-
 # CSS 적용
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 load_css()  # CSS 로드 함수 호출
@@ -112,7 +121,7 @@ def fetch_instruction_from_notion(activity_code):
             if "student_view" in properties and properties["student_view"]["rich_text"]:
                 student_view = properties["student_view"]["rich_text"][0]["text"]["content"]
             else:
-                student_view = ""  # 기본 제목
+                student_view = "🤖 학생용: 챗봇 도구"  # 기본 제목
             
             return instruction, teacher_email, student_view
         else:
@@ -185,14 +194,27 @@ def main():
                 st.sidebar.error("프롬프트를 불러오지 못했습니다.")
     
     st.title(st.session_state.student_view)
-
+    
     if st.session_state.initialized:
+        # 누적 스크롤을 위한 chat-container div 시작
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        for msg in st.session_state.messages:
+            if msg["role"] == "user":
+                st.markdown(f'<div style="text-align: right;"><strong>학생:</strong> {msg["content"]}</div>', unsafe_allow_html=True)
+            elif msg["role"] == "assistant":
+                st.markdown(f'<div style="text-align: left;"><strong>챗봇:</strong> {msg["content"]}</div>', unsafe_allow_html=True)
+            elif msg["role"] == "system":
+                # 시스템 메시지는 표시하지 않을 수도 있습니다.
+                pass
+        st.markdown('</div>', unsafe_allow_html=True)
+        # chat-container div 끝
+        
         if prompt := st.chat_input("메시지를 입력하세요"):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            st.chat_message("user").write(prompt)
-
+            # st.chat_message("user").write(prompt)  # 기존의 개별 메시지 표시 제거
+    
             user_message_count = sum(1 for msg in st.session_state.messages if msg["role"] == "user")
-
+    
             with st.spinner("응답을 기다리는 중..."):
                 try:
                     response = client.chat.completions.create(
@@ -201,17 +223,20 @@ def main():
                     )
                     msg = response.choices[0].message.content.strip()
                     st.session_state.messages.append({"role": "assistant", "content": msg})
-                    st.chat_message("assistant").write(msg)
+                    # st.chat_message("assistant").write(msg)  # 기존의 개별 메시지 표시 제거
                 except Exception as e:
                     st.error(f"AI 응답 생성에 실패했습니다: {e}")
-
+    
             if user_message_count % 5 == 0 and user_message_count != st.session_state.last_email_count:
                 success = send_email(st.session_state.messages, student_name, st.session_state.teacher_email)
                 if success:
-                    st.success("대화 내역이 성공적으로 이메일로 전송되었습니다.")
+                    st.sidebar.success("대화 내역이 성공적으로 이메일로 전송되었습니다.")
                     st.session_state.last_email_count = user_message_count
                 else:
-                    st.error("대화 내역 이메일 전송에 실패했습니다.")
+                    st.sidebar.error("대화 내역 이메일 전송에 실패했습니다.")
+            
+            # 대화 내역을 업데이트하여 누적 스크롤 반영
+            st.rerun()  # 페이지를 새로 고침하여 대화 내역을 갱신
 
 if __name__ == "__main__":
     main()
