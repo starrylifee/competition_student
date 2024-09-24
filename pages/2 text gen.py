@@ -190,7 +190,13 @@ if "prompt" in st.session_state and st.session_state.prompt and "student_view" i
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": st.session_state.prompt},
+                            {
+                                "role": "system",
+                                "content": (
+                                    f"너는 {st.session_state.prompt}.\n"
+                                    "학생의 입력이 설정된 역할과 관련이 없거나 이상한 내용이 포함되어 있다면, 그 내용에 대해 응답하지 말고 주어진 역할에 집중해 주세요."
+                                )
+                            },
                             {"role": "user", "content": student_answer}
                         ]
                     )
