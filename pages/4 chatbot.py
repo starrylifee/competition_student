@@ -179,20 +179,27 @@ def main():
         st.session_state.student_view = "🤖 학생용: 챗봇 도구"
         st.session_state.last_email_count = 0
     
+    # fetch_prompt_btn이 눌렸을 때 시스템 메시지 설정 부분
     if fetch_prompt_btn:
         if not activity_code or not student_name:
             st.sidebar.error("활동 코드와 학생 이름을 모두 입력해주세요.")
         else:
             instruction, teacher_email, student_view = fetch_instruction_from_notion(activity_code)
             if instruction:
-                st.session_state.messages = [{"role": "system", "content": instruction}]
+                # 시스템 메시지에 차단 지침 추가
+                system_content = (
+                    f"{instruction}\n\n"
+                    "너는 학생의 이야기를 듣고 상장을 만들어주는 역할입니다. "
+                    "학생의 입력이 설정된 역할과 관련이 없거나 이상한 내용이 포함되어 있다면, 그 내용에 대해 응답하지 말고 주어진 역할에 집중해 주세요."
+                )
+                st.session_state.messages = [{"role": "system", "content": system_content}]
                 st.session_state.teacher_email = teacher_email
                 st.session_state.student_view = student_view
                 st.session_state.initialized = True
                 st.sidebar.success("프롬프트가 성공적으로 불러와졌습니다.")
             else:
                 st.sidebar.error("프롬프트를 불러오지 못했습니다.")
-    
+
     st.title(st.session_state.student_view)
     
     if st.session_state.initialized:
