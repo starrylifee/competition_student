@@ -108,13 +108,13 @@ def fetch_prompt_student_view_email_from_notion(activity_code):
                     continue
                 student_view = student_view_rich_text[0].get("text", {}).get("content", "")
                 
-                # 'email' 속성에서 plain_text 가져오기
+                # 'email' 속성에서 plain_text 가져오기 (선택 사항)
                 email_property = properties.get("email", {})
                 email_rich_text = email_property.get("rich_text", [])
-                if not email_rich_text:
-                    continue
-                teacher_email = email_rich_text[0].get("plain_text", "")
-
+                teacher_email = ""
+                if email_rich_text:
+                    teacher_email = email_rich_text[0].get("plain_text", "")
+    
                 # **차단 지침 추가**
                 blocking_instructions = (
                     "\n\n"
@@ -130,9 +130,9 @@ def fetch_prompt_student_view_email_from_notion(activity_code):
 # 이메일 전송 기능
 def send_email_to_teacher(student_name, teacher_email, prompt, image_data, ai_response):
     if not teacher_email:
-        st.warning("교사 이메일이 설정되어 있지 않습니다.")
-        return False  # 이메일 전송 실패
-
+        st.info("⚠️ 교사 이메일이 설정되어 있지 않아 이메일을 전송하지 않습니다.")
+        return False  # 이메일 전송 건너뜀
+    
     msg = MIMEMultipart()
     msg["From"] = secrets["email"]["address"]
     msg["To"] = teacher_email
@@ -188,10 +188,10 @@ if st.button("📄 프롬프트 가져오기", key="get_prompt"):
     if activity_code:
         with st.spinner("🔍 프롬프트를 불러오는 중..."):
             prompt, student_view, teacher_email = fetch_prompt_student_view_email_from_notion(activity_code)
-            if prompt and student_view and teacher_email:
+            if prompt and student_view:
                 st.session_state.prompt = prompt
                 st.session_state.student_view = student_view
-                st.session_state.teacher_email = teacher_email
+                st.session_state.teacher_email = teacher_email  # None 또는 빈 문자열일 수 있음
                 st.success("✅ 프롬프트를 성공적으로 불러왔습니다.")
             else:
                 st.error("⚠️ 활동 코드를 다시 확인하세요.")  # 코드 불러오기 실패 시 오류 메시지
@@ -231,7 +231,8 @@ if "prompt" in st.session_state and st.session_state.prompt and "student_view" i
 
                 # 결과와 이미지를 교사에게 이메일로 전송
                 if send_email_to_teacher(student_name, st.session_state.teacher_email, st.session_state.prompt, img_bytes, ai_response_text):
-                    st.success("📧 교사에게 이메일로 결과가 전송되었습니다.")
+                    if st.session_state.teacher_email:
+                        st.success("📧 교사에게 이메일로 결과가 전송되었습니다.")
         except UnidentifiedImageError:
             st.error("❌ 업로드된 파일이 유효한 이미지 파일이 아닙니다. 다른 파일을 업로드해 주세요.")
 else:

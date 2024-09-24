@@ -82,8 +82,7 @@ NOTION_DATABASE_ID = secrets["notion"]["database_id_image"]
 # 이메일 전송 기능
 def send_email_to_teacher(student_name, teacher_email, prompt, adjectives, image_url):
     if not teacher_email:
-        st.warning("교사 이메일이 설정되어 있지 않습니다.")
-        return False  # 이메일 전송 실패
+        return False  # 이메일 전송 건너뜀
 
     msg = MIMEMultipart()
     msg["From"] = secrets["email"]["address"]
@@ -187,9 +186,9 @@ if st.button("📄 프롬프트 가져오기", key="get_prompt"):
         with st.spinner("🔍 프롬프트를 불러오는 중..."):
             prompt, teacher_email, adjectives = get_prompt_and_adjectives(activity_code)
 
-            if prompt and teacher_email:
+            if prompt:
                 st.session_state.prompt = prompt
-                st.session_state.teacher_email = teacher_email
+                st.session_state.teacher_email = teacher_email  # 빈 문자열일 수 있음
                 st.session_state.adjectives = adjectives
                 st.success("✅ 프롬프트를 성공적으로 불러왔습니다.")
             else:
@@ -241,7 +240,8 @@ if st.session_state.prompt:
                         )
                         # 이메일로 결과 전송
                         if send_email_to_teacher(student_name, st.session_state.teacher_email, st.session_state.prompt, selected_adjective, image_url):
-                            st.success("📧 교사에게 이메일로 결과가 전송되었습니다.")
+                            if st.session_state.teacher_email:
+                                st.success("📧 교사에게 이메일로 결과가 전송되었습니다.")
                     else:
                         st.error("이미지를 가져오는 중 오류가 발생했습니다.")
 

@@ -3,9 +3,22 @@ from openai import OpenAI
 import streamlit as st
 import random
 import requests
+import pathlib
+import toml
+import json
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+# 세션 상태 초기화
+if 'prompt' not in st.session_state:
+    st.session_state.prompt = ""
+if 'teacher_email' not in st.session_state:
+    st.session_state.teacher_email = ""
+if 'image_url' not in st.session_state:
+    st.session_state.image_url = ""
+if 'adjectives' not in st.session_state:
+    st.session_state.adjectives = []
 
 # 페이지 설정 - 아이콘과 제목 설정
 st.set_page_config(
@@ -68,8 +81,15 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 load_css()  # CSS 로드 함수 호출
 
+# secrets.toml 파일 경로
+secrets_path = pathlib.Path(__file__).parent.parent / ".streamlit/secrets.toml"
+
+# secrets.toml 파일 읽기
+with open(secrets_path, "r") as f:
+    secrets = toml.load(f)
+
 # OpenAI API 클라이언트 초기화
-api_keys = st.secrets["api"]["keys"]
+api_keys = secrets["api"]["keys"]
 api_keys = [key for key in api_keys if key]  # None 값 제거
 
 if api_keys:
@@ -82,8 +102,8 @@ else:
 
 # 노션 API 설정
 NOTION_API_URL = "https://api.notion.com/v1/databases/{database_id}/query"
-NOTION_API_KEY = st.secrets["notion"]["api_key"]
-DATABASE_ID_CHATBOT = st.secrets["notion"]["database_id_chatbot"]
+NOTION_API_KEY = secrets["notion"]["api_key"]
+DATABASE_ID_CHATBOT = secrets["notion"]["database_id_chatbot"]
 
 headers = {
     "Authorization": f"Bearer {NOTION_API_KEY}",
@@ -91,6 +111,33 @@ headers = {
     "Notion-Version": "2022-06-28"
 }
 
+# 이메일 전송 기능
+def send_email(chat_history, student_name, teacher_email):
+    if not teacher_email:
+        return False  # 이메일 전송 건너뜀
+
+    msg = MIMEMultipart()
+    msg["From"] = secrets["email"]["address"]
+    msg["To"] = teacher_email
+    msg["Subject"] = f"{student_name} 학생의 챗봇 대화 기록"
+
+    body = f"학생 이름: {student_name}\n\n대화 기록:\n\n"
+    for msg_entry in chat_history:
+        role = "학생" if msg_entry["role"] == "user" else "챗봇"
+        body += f"{role}: {msg_entry['content']}\n"
+
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(secrets["email"]["address"], secrets["email"]["password"])
+            server.send_message(msg)
+        return True  # 이메일 전송 성공
+    except Exception as e:
+        st.error(f"이메일 전송에 실패했습니다: {e}")
+        return False  # 이메일 전송 실패
+
+# Notion에서 프롬프트와 교사 이메일, 학생 뷰 가져오기
 def fetch_instruction_from_notion(activity_code):
     try:
         instruction_api_url = NOTION_API_URL.format(database_id=DATABASE_ID_CHATBOT)
@@ -133,32 +180,6 @@ def fetch_instruction_from_notion(activity_code):
     except Exception as e:
         st.sidebar.error(f"데이터 처리 중 오류가 발생했습니다: {e}")
         return None, None, None
-
-def send_email(chat_history, student_name, teacher_email):
-    if not teacher_email:
-        st.warning("교사 이메일이 설정되어 있지 않습니다.")
-        return False  # 이메일 전송 실패
-
-    msg = MIMEMultipart()
-    msg["From"] = st.secrets["email"]["address"]
-    msg["To"] = teacher_email
-    msg["Subject"] = f"{student_name} 학생의 챗봇 대화 기록"
-
-    body = f"학생 이름: {student_name}\n\n대화 기록:\n\n"
-    for msg_entry in chat_history:
-        role = "학생" if msg_entry["role"] == "user" else "챗봇"
-        body += f"{role}: {msg_entry['content']}\n"
-
-    msg.attach(MIMEText(body, "plain"))
-
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(st.secrets["email"]["address"], st.secrets["email"]["password"])
-            server.send_message(msg)
-        return True  # 이메일 전송 성공
-    except Exception as e:
-        st.error(f"이메일 전송에 실패했습니다: {e}")
-        return False  # 이메일 전송 실패
 
 def main():
     st.sidebar.header("활동 코드 및 학생 이름 입력")
@@ -236,8 +257,11 @@ def main():
     
             if user_message_count % 5 == 0 and user_message_count != st.session_state.last_email_count:
                 success = send_email(st.session_state.messages, student_name, st.session_state.teacher_email)
-                if success:
+                if success and st.session_state.teacher_email:
                     st.sidebar.success("대화 내역이 성공적으로 이메일로 전송되었습니다.")
+                    st.session_state.last_email_count = user_message_count
+                elif not st.session_state.teacher_email:
+                    # teacher_email이 없을 경우 별도의 메시지 없이 건너뜀
                     st.session_state.last_email_count = user_message_count
                 else:
                     st.sidebar.error("대화 내역 이메일 전송에 실패했습니다.")
