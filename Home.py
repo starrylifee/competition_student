@@ -33,7 +33,7 @@ with col1:
     st.markdown(
         """
         <h4>1. 이미지 분석 도구</h4>
-        <a href="https://students-ai.streamlit.app/vision(new)" target="_blank" style="text-decoration: none;">
+        <a href="https://students.streamlit.app/vision" target="_blank" style="text-decoration: none;">
             <span style="font-size: 100px;">🖼️</span>
             <div style="text-align: center; font-size: 20px;">클릭하세요</div>
         </a>
@@ -46,7 +46,7 @@ with col2:
     st.markdown(
         """
         <h4>2. 텍스트 생성 도구</h4>
-        <a href="https://students-ai.streamlit.app/text_gen(new)" target="_blank" style="text-decoration: none;">
+        <a href="https://students.streamlit.app/text_gen" target="_blank" style="text-decoration: none;">
             <span style="font-size: 100px;">📝</span>
             <div style="text-align: center; font-size: 20px;">클릭하세요</div>
         </a>
@@ -59,11 +59,24 @@ with col1:
     st.markdown(
         """
         <h4>3. 이미지 생성 도구</h4>
-        <a href="https://students-ai.streamlit.app/image_gen(new)" target="_blank" style="text-decoration: none;">
+        <a href="https://students.streamlit.app/image_gen" target="_blank" style="text-decoration: none;">
             <span style="font-size: 100px;">🖌️</span>
             <div style="text-align: center; font-size: 20px;">클릭하세요</div>
         </a>
         <p>이 도구를 사용하여 AI가 생성한 이미지를 학습 자료로 사용할 수 있습니다. 창의적인 이미지 만들기에 도전해보세요.</p>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.markdown(
+        """
+        <h4>4. 챗봇 도구</h4>
+        <a href="https://students.streamlit.app/chatbot" target="_blank" style="text-decoration: none;">
+            <span style="font-size: 100px;">💬</span>
+            <div style="text-align: center; font-size: 20px;">클릭하세요</div>
+        </a>
+        <p>이 도구를 사용하여 AI와 특정한 주제로 대화할 수 있습니다. 수업과 관련된 내용으로 챗봇과 대화해보세요.</p>
         """,
         unsafe_allow_html=True
     )
