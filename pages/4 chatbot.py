@@ -210,7 +210,6 @@ def main():
                 # 시스템 메시지에 차단 지침 추가
                 system_content = (
                     f"{instruction}\n\n"
-                    "너는 학생의 이야기를 듣고 상장을 만들어주는 역할입니다. "
                     "학생의 입력이 설정된 역할과 관련이 없거나 이상한 내용이 포함되어 있다면, 그 내용에 대해 응답하지 말고 주어진 역할에 집중해 주세요."
                 )
                 st.session_state.messages = [{"role": "system", "content": system_content}]
