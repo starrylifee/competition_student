@@ -50,7 +50,7 @@ with col2:
             <span style="font-size: 100px;">📝</span>
             <div style="text-align: center; font-size: 20px;">클릭하세요</div>
         </a>
-        <p>이 도구를 사용하여 AI가 생성한 텍스트를 학습 자료로 활용할 수 있습니다. 창의적 글쓰기와 학습에 도움을 줍니다.</p>
+        <p>이 도구를 사용하여 AI가 생성한 텍스트를 학습 자료로 활용할 수 있습니다.</p>
         """,
         unsafe_allow_html=True
     )
