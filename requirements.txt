@@ -1,6 +1,6 @@
 Pillow
-google-generativeai
-openai
+google-generativeai==0.8.1
+openai==1.46.1
 requests
-streamlit
+streamlit==1.38.0
 toml
